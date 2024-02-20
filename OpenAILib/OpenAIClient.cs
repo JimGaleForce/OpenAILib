@@ -125,9 +125,9 @@ namespace OpenAILib
         /// </summary>
         /// <param name="text">Text to obtain the embedding vector for</param>
         /// <returns>A 1536 dimensional vector representing the embedding</returns>
-        public async Task<double[]> GetEmbeddingAsync(string text)
+        public async Task<double[]> GetEmbeddingAsync(string text, string model = "text-embedding-ada-002")
         {
-            return await _embeddingsClient.GetEmbeddingAsync(text);
+            return await _embeddingsClient.GetEmbeddingAsync(text, model);
         }
 
         public IFineTunesClient FineTuning => _fineTuningClient;
