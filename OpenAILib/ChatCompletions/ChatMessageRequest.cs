@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace OpenAILib.ChatCompletions
 {
-    internal class ChatMessageRequest
+    class ChatMessageRequest
     {
         [JsonPropertyName("role")]
         public ChatRole Role { get; }

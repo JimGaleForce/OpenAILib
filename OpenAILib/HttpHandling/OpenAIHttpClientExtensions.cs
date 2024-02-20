@@ -12,12 +12,16 @@ namespace OpenAILib.HttpHandling
     /// <summary>
     /// Utility methods for common HttpClient operations
     /// </summary>
-    internal static class OpenAIHttpClientExtensions
+    static class OpenAIHttpClientExtensions
     {
         /// <summary>
-        /// <see cref="HttpClient"/> extension which handles object deletion from various endpoints - creates endpoint specific exception if required
+        /// <see cref="HttpClient"/> extension which handles object deletion from various endpoints
+        /// - creates endpoint specific exception if required
         /// </summary>
-        public static async Task<bool> OpenAIDeleteAsync(this HttpClient httpClient, string requestUri, CancellationToken cancellationToken = default)
+        public static async Task<bool> OpenAIDeleteAsync(
+            this HttpClient httpClient,
+            string requestUri,
+            CancellationToken cancellationToken = default)
         {
             using var httpResponse = await RetryDeleteOnConflictAsync(httpClient, requestUri, cancellationToken);
             if (httpResponse.StatusCode == HttpStatusCode.NotFound)
@@ -30,7 +34,10 @@ namespace OpenAILib.HttpHandling
             return response.Deleted;
         }
 
-        private static async Task<HttpResponseMessage> RetryDeleteOnConflictAsync(HttpClient httpClient, string requestUri, CancellationToken cancellationToken)
+        private static async Task<HttpResponseMessage> RetryDeleteOnConflictAsync(
+            HttpClient httpClient,
+            string requestUri,
+            CancellationToken cancellationToken)
         {
             // Unfortunately, the 'files' endpoint isn't robust against fast
             // create / delete operations like this and '429 - Conflict' can
@@ -44,6 +51,7 @@ namespace OpenAILib.HttpHandling
                 {
                     return httpResponse;
                 }
+
                 // Since we are not returning the response, it is explicitly disposed here
                 httpResponse.Dispose();
                 await Task.Delay(5000, cancellationToken);
@@ -54,11 +62,10 @@ namespace OpenAILib.HttpHandling
             return await httpClient.DeleteAsync(requestUri);
         }
 
-
         public static async Task<TResponse> OpenAIPostAsync<TRequest, TResponse>(
-            this HttpClient httpClient, 
-            string requestUri, 
-            TRequest request, 
+            this HttpClient httpClient,
+            string requestUri,
+            TRequest request,
             CancellationToken cancellationToken = default)
         {
             var content = JsonContent.Create(request);
@@ -80,7 +87,8 @@ namespace OpenAILib.HttpHandling
             CancellationToken cancellationToken = default)
         {
             var content = JsonContent.Create(request);
-            var requestHash = RequestHashCalculator.CalculateHash(requestUri, await content.ReadAsStringAsync());
+            var text = await content.ReadAsStringAsync();
+            var requestHash = RequestHashCalculator.CalculateHash(requestUri, text);
             if (!responseCache.TryGetResponseAsync(requestHash, out var responseText))
             {
                 var response = await httpClient.PostAsync(httpClient.LazyUri(requestUri), content, cancellationToken);
@@ -101,7 +109,9 @@ namespace OpenAILib.HttpHandling
             var response = JsonSerializer.Deserialize<T>(stream);
             if (response == null)
             {
-                throw new ArgumentException($"Failed to deserialize response from endpoint '{requestUri}'.", nameof(stream));
+                throw new ArgumentException(
+                    $"Failed to deserialize response from endpoint '{requestUri}'.",
+                    nameof(stream));
             }
             return response;
         }
@@ -111,7 +121,9 @@ namespace OpenAILib.HttpHandling
             var response = JsonSerializer.Deserialize<T>(text);
             if (response == null)
             {
-                throw new ArgumentException($"Failed to deserialize response from endpoint '{requestUri}'.", nameof(text));
+                throw new ArgumentException(
+                    $"Failed to deserialize response from endpoint '{requestUri}'.",
+                    nameof(text));
             }
             return response;
         }

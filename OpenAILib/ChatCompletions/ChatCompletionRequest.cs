@@ -6,7 +6,7 @@ namespace OpenAILib.ChatCompletions
     using System.Collections.Generic;
     using System.Text.Json.Serialization;
 
-    internal class ChatCompletionRequest
+    class ChatCompletionRequest
     {
         [JsonPropertyName("model")]
         public string Model { get; }
@@ -53,6 +53,9 @@ namespace OpenAILib.ChatCompletions
         [JsonPropertyName("user")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? User { get; set; }
+
+        [JsonPropertyName("functions")]
+        public List<dynamic> Functions { get; set; }
 
         [JsonConstructor]
         public ChatCompletionRequest(string model, List<ChatMessageRequest> messages)

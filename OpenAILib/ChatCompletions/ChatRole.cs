@@ -13,6 +13,7 @@ namespace OpenAILib
     {
         System,
         User,
-        Assistant
+        Assistant,
+        Function
     }
 }

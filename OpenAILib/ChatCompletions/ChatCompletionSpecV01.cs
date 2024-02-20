@@ -3,7 +3,9 @@
 
 namespace OpenAILib.ChatCompletions
 {
-    internal class ChatCompletionSpecV01 : IChatCompletionSpecV01
+    using Newtonsoft.Json;
+
+    class ChatCompletionSpecV01 : IChatCompletionSpecV01
     {
         private string _model = ChatCompletionModels.Gpt35Turbo;
         private double? _temperature;
@@ -62,15 +64,15 @@ namespace OpenAILib.ChatCompletions
             return this;
         }
 
-        public ChatCompletionRequest ToRequest(IEnumerable<ChatMessage> sequence)
+        public ChatCompletionRequest ToRequest(
+            IEnumerable<ChatMessage> sequence,
+            IEnumerable<ChatFunction> functions = null)
         {
             var chatMessageRequest = sequence
                 .Select(chatMessage => new ChatMessageRequest(role: chatMessage.Role, content: chatMessage.Message))
                 .ToList();
 
-            var chatCompletionRequest = new ChatCompletionRequest(
-                model: _model,
-                messages: chatMessageRequest)
+            var chatCompletionRequest = new ChatCompletionRequest(model: _model, messages: chatMessageRequest)
             {
                 MaxTokens = _maxTokens,
                 Temperature = _temperature,
@@ -80,6 +82,20 @@ namespace OpenAILib.ChatCompletions
                 Stop = _stop,
                 User = _user
             };
+
+            if (functions != null)
+            {
+                var functionRequests = new List<dynamic>();
+
+                foreach (var function in functions)
+                {
+                    var json = GPTFunctionUtils.GPTFunctionJson(function.aiFunction);
+                    var fn = JsonConvert.DeserializeObject<dynamic>(json);
+                    functionRequests.Add(fn);
+                }
+
+                chatCompletionRequest.Functions = functionRequests;
+            }
 
             return chatCompletionRequest;
         }

@@ -18,13 +18,15 @@ namespace OpenAILib
         private readonly FineTunesClient _fineTuningClient;
 
         /// <summary>
-        /// Initializes a new instance of <see cref="OpenAIClient"/> with specified organization ID and api key credentials
+        /// Initializes a new instance of <see cref="OpenAIClient"/> with specified organization ID
+        /// and api key credentials
         /// </summary>
         /// <param name="organizationId">OpenAI organization id</param>
         /// <param name="apiKey">OpenAI api key</param>
         /// <param name="url">Base url of the OpenAI API service</param>
-        public OpenAIClient(string organizationId, string apiKey, string url = OpenAIClientArgs.OpenAIUrl) 
-            : this(new OpenAIClientArgs(organizationId, apiKey)
+        public OpenAIClient(string organizationId, string apiKey, string url = OpenAIClientArgs.OpenAIUrl)
+            : this(
+            new OpenAIClientArgs(organizationId, apiKey)
             {
                 Url = url
             })
@@ -41,11 +43,15 @@ namespace OpenAILib
         }
 
         /// <summary>
-        /// Gets a completion for the specified <paramref name="prompt"/> using the best available model and defaults
+        /// Gets a completion for the specified <paramref name="prompt"/> using the best available
+        /// model and defaults
         /// </summary>
         /// <param name="prompt">The text displayed as a prompt to suggest the completion</param>
         /// <returns>A <see cref="string"/> representing the completion</returns>
-        /// <remarks>Currently using the 'gpt-3.5-turbo' (ChatGPT) model prefixed with a recommended System role message</remarks>
+        /// <remarks>
+        /// Currently using the 'gpt-3.5-turbo' (ChatGPT) model prefixed with a recommended System
+        /// role message
+        /// </remarks>
         public async Task<string> GetCompletionAsync(string prompt)
         {
             var sequence = new List<ChatMessage>
@@ -57,41 +63,55 @@ namespace OpenAILib
         }
 
         /// <summary>
-        /// Gets a completion for the specified <paramref name="prompt"/> using the parameters specified in <paramref name="spec"/>
+        /// Gets a completion for the specified <paramref name="prompt"/> using the parameters
+        /// specified in <paramref name="spec"/>
         /// </summary>
         /// <param name="prompt">The prompt to generate completions for</param>
-        /// <param name="spec">Used to configure the completion request (set the model, max tokens, etc). OpenAI current 
-        /// defaults used for any unspecified parameter. See remarks for discussion of model used</param>
+        /// <param name="spec">
+        /// Used to configure the completion request (set the model, max tokens, etc). OpenAI
+        /// current  defaults used for any unspecified parameter. See remarks for discussion of
+        /// model used
+        /// </param>
         /// <returns>A <see cref="string"/> representing the completion</returns>
-        /// <remarks>Defaults to model recommended by OpenAI for most used cases
-        /// if not specified (currently 'text-davinci-003')</remarks>
+        /// <remarks>
+        /// Defaults to model recommended by OpenAI for most used cases if not specified (currently
+        /// 'text-davinci-003')
+        /// </remarks>
         public async Task<string> GetCompletionAsync(string prompt, Action<ICompletionSpecV01> spec)
         {
             var completionSpecOptions = new CompletionSpecV01();
+
             // apply any specifications
             spec(completionSpecOptions);
-
 
             var completionRequest = await completionSpecOptions.ToCompletionRequestAsync(prompt, _fineTuningClient);
             var response = await _completionsClient.GetCompletionAsync(completionRequest);
             return response.Choices[0].Text.Trim();
         }
 
-        public async Task<string> GetChatCompletionAsync(IEnumerable<ChatMessage> sequence)
+        public async Task<string> GetChatCompletionAsync(
+            IEnumerable<ChatMessage> sequence,
+            IEnumerable<ChatFunction> functions = null)
         {
-            return await GetChatCompletionAsync(sequence, new ChatCompletionSpecV01());
+            return await GetChatCompletionAsync(sequence, new ChatCompletionSpecV01(), functions);
         }
 
-        public async Task<string> GetChatCompletionAsync(IEnumerable<ChatMessage> sequence, Action<IChatCompletionSpecV01> spec)
+        public async Task<string> GetChatCompletionAsync(
+            IEnumerable<ChatMessage> sequence,
+            Action<IChatCompletionSpecV01> spec,
+            IEnumerable<ChatFunction> functions = null)
         {
             var chatCompletionSpec = new ChatCompletionSpecV01();
             spec(chatCompletionSpec);
-            return await GetChatCompletionAsync(sequence, chatCompletionSpec);
+            return await GetChatCompletionAsync(sequence, chatCompletionSpec, functions);
         }
 
-        private async Task<string> GetChatCompletionAsync(IEnumerable<ChatMessage> sequence, ChatCompletionSpecV01 chatCompletionSpec)
+        private async Task<string> GetChatCompletionAsync(
+            IEnumerable<ChatMessage> sequence,
+            ChatCompletionSpecV01 chatCompletionSpec,
+            IEnumerable<ChatFunction> functions = null)
         {
-            var chatCompletionRequest = chatCompletionSpec.ToRequest(sequence);
+            var chatCompletionRequest = chatCompletionSpec.ToRequest(sequence, functions);
             var response = await _chatCompletionsClient.CreateChatCompletionAsync(chatCompletionRequest);
             if (response.Choices.Count == 0)
             {

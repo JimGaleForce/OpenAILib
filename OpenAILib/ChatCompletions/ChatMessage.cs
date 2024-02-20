@@ -4,7 +4,8 @@
 namespace OpenAILib
 {
     /// <summary>
-    /// Represents an Open AI chat message completion with specified <paramref name="Role"/> and <paramref name="Message"/>
+    /// Represents an Open AI chat message completion with specified <paramref name="Role"/> and
+    /// <paramref name="Message"/>
     /// </summary>
     /// <param name="Role">Role associated with the message</param>
     /// <param name="Message">Message text</param>
